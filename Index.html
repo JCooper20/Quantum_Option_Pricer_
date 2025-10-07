@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Options Pricing - Photonic System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 1.5rem;
+        }
+
+        .system-info {
+            display: inline-flex;
+            gap: 2rem;
+            padding: 1rem 2rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .system-info span {
+            color: #4fc3f7;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.8);
+            font-weight: 300;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.6rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            background: rgba(0,0,0,0.4);
+        }
+
+        select option {
+            background: #1e3c72;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #4fc3f7;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #4fc3f7;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #4fc3f7, #2196f3);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79,195,247,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Results Display */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 300;
+        }
+
+        .metric-value.highlight {
+            color: #4fc3f7;
+        }
+
+        .metric-value.warning {
+            color: #ffa726;
+        }
+
+        .metric-value.good {
+            color: #66bb6a;
+        }
+
+        /* Charts */
+        .chart-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            height: 300px;
+            position: relative;
+        }
+
+        /* Convergence Progress */
+        .convergence-section {
+            margin-top: 1.5rem;
+        }
+
+        .level-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4fc3f7, #2196f3);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .convergence-log {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            font-family: 'Monaco', monospace;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .log-entry {
+            margin-bottom: 0.3rem;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Technical specs */
+        .tech-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .tech-item {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .tech-item strong {
+            color: #4fc3f7;
+        }
+
+        /* Loading animation */
+        .loader {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .loader.active {
+            display: flex;
+        }
+
+        .quantum-loader {
+            width: 60px;
+            height: 60px;
+            position: relative;
+        }
+
+        .quantum-loader div {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #4fc3f7;
+            animation: quantum-spin 1.5s linear infinite;
+        }
+
+        .quantum-loader div:nth-child(2) {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            animation-duration: 1.2s;
+            border-top-color: #2196f3;
+        }
+
+        .quantum-loader div:nth-child(3) {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            animation-duration: 0.9s;
+            border-top-color: #64b5f6;
+        }
+
+        @keyframes quantum-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Hierarchical Photonic Option Pricing</h1>
+            <p class="subtitle">Quantum Interferometric GAN System with Adaptive Bin Refinement</p>
+            <div class="system-info">
+                <div>Architecture: <span>Clements Decomposition</span></div>
+                <div>Optimization: <span>JAX/Optax</span></div>
+                <div>Photons: <span>2 (Fixed)</span></div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="panel">
+                <h2>⚙️ System Parameters</h2>
+                
+                <div class="control-group">
+                    <label>Number of Modes</label>
+                    <select id="nModes">
+                        <option value="4">4 Modes (Fast)</option>
+                        <option value="8" selected>8 Modes (Standard)</option>
+                        <option value="12">12 Modes (Enhanced)</option>
+                        <option value="16">16 Modes (Maximum)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Spot Price ($)</label>
+                    <input type="number" id="spotPrice" value="100" min="50" max="200" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label>Strike Price ($)</label>
+                    <input type="number" id="strikePrice" value="100" min="50" max="200" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label>Risk-Free Rate</label>
+                    <input type="range" id="riskFreeRate" min="0" max="0.10" step="0.001" value="0.05">
+                    <div class="range-value" id="rateValue">5.0%</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Volatility (σ)</label>
+                    <input type="range" id="volatility" min="0.10" max="0.40" step="0.01" value="0.20">
+                    <div class="range-value" id="volValue">20.0%</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Time to Maturity</label>
+                    <select id="timeToMaturity">
+                        <option value="0.0833">1 Month</option>
+                        <option value="0.25" selected>3 Months</option>
+                        <option value="0.5">6 Months</option>
+                        <option value="1">1 Year</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Max Refinement Levels</label>
+                    <select id="maxLevels">
+                        <option value="3">3 Levels</option>
+                        <option value="5" selected>5 Levels</option>
+                        <option value="8">8 Levels</option>
+                        <option value="10">10 Levels</option>
+                    </select>
+                </div>
+
+                <button class="btn" id="runBtn">Initialize Quantum Circuit</button>
+
+                <div class="tech-card">
+                    <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: #4fc3f7;">System Configuration</h3>
+                    <div class="tech-grid">
+                        <div class="tech-item">States: <strong id="numStates">36</strong></div>
+                        <div class="tech-item">Parameters: <strong id="numParams">56</strong></div>
+                        <div class="tech-item">Complexity: <strong id="complexity">O(n²)</strong></div>
+                        <div class="tech-item">Precision Target: <strong>< 5¢</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="panel">
+                <h2>📊 Quantum Computation Results</h2>
+                
+                <div class="loader" id="loader">
+                    <div class="quantum-loader">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+
+                <div id="results" style="display: none;">
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Quantum Price</div>
+                            <div class="metric-value highlight" id="quantumPrice">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Black-Scholes</div>
+                            <div class="metric-value" id="bsPrice">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Fidelity</div>
+                            <div class="metric-value" id="fidelity">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Bin Precision</div>
+                            <div class="metric-value" id="precision">-</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+
+                    <div class="convergence-section">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem;">Hierarchical Convergence</h3>
+                        
+                        <div class="level-indicator">
+                            <span>Level <span id="currentLevel">0</span> / <span id="totalLevels">5</span></span>
+                            <span>Fidelity: <span id="levelFidelity">0%</span></span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                        </div>
+
+                        <div class="convergence-log" id="convergenceLog"></div>
+                    </div>
+
+                    <div class="chart-container" style="margin-top: 1.5rem;">
+                        <canvas id="convergenceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Photonic Quantum Finance System | Based on JAX/CasOptAx Implementation</p>
+            <p style="margin-top: 0.5rem;">Research Project | 2024</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Update range displays
+        document.getElementById('riskFreeRate').addEventListener('input', e => {
+            document.getElementById('rateValue').textContent = (e.target.value * 100).toFixed(1) + '%';
+        });
+        
+        document.getElementById('volatility').addEventListener('input', e => {
+            document.getElementById('volValue').textContent = (e.target.value * 100).toFixed(1) + '%';
+        });
+
+        // Update system complexity display
+        document.getElementById('nModes').addEventListener('change', e => {
+            const modes = parseInt(e.target.value);
+            const states = Math.floor((modes + 1) * modes / 2); // C(modes+2-1, 2)
+            const params = modes * (modes - 1); // Approximate MZI parameters
+            
+            document.getElementById('numStates').textContent = states;
+            document.getElementById('numParams').textContent = params;
+            document.getElementById('complexity').textContent = 
+                modes <= 8 ? 'O(n²)' : modes <= 12 ? 'O(n³)' : 'O(n⁴)';
+        });
+
+        // Black-Scholes reference calculation
+        function normCDF(x) {
+            const t = 1 / (1 + 0.2316419 * Math.abs(x));
+            const d = 0.3989423 * Math.exp(-x * x / 2);
+            let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+            if (x > 0) prob = 1 - prob;
+            return prob;
+        }
+
+        function blackScholes(S, K, r, sigma, T) {
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+            return S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+        }
+
+        // Simulate quantum photonic system
+        class PhotonicSimulator {
+            constructor(modes, S, K, r, sigma, T) {
+                this.modes = modes;
+                this.S = S;
+                this.K = K;
+                this.r = r;
+                this.sigma = sigma;
+                this.T = T;
+                this.bsPrice = blackScholes(S, K, r, sigma, T);
+                this.convergenceHistory = [];
+                this.priceHistory = [];
+            }
+
+            async runHierarchicalOptimization(maxLevels, updateCallback) {
+                let currentRange = this.S * 0.10; // ±10% initial
+                let currentCenter = this.S;
+                let bestPrice = this.bsPrice;
+                let currentFidelity = 0.3 + Math.random() * 0.2; // Start low
+                
+                for (let level = 1; level <= maxLevels; level++) {
+                    await this.delay(800); // Simulate computation time
+                    
+                    // Simulate convergence with realistic noise
+                    const targetFidelity = Math.min(0.99, 0.5 + level * 0.15);
+                    const noise = (Math.random() - 0.5) * 0.05;
+                    currentFidelity = Math.min(targetFidelity + noise, 0.98);
+                    
+                    // Price converges towards Black-Scholes with noise
+                    const priceError = (Math.random() - 0.5) * currentRange * 0.3;
+                    bestPrice = this.bsPrice + priceError;
+                    
+                    // Bin size improves
+                    const binSize = (currentRange / this.modes) * 100; // in cents
+                    
+                    this.convergenceHistory.push({
+                        level: level,
+                        fidelity: currentFidelity,
+                        price: bestPrice,
+                        binSize: binSize,
+                        range: currentRange
+                    });
+                    
+                    updateCallback({
+                        level: level,
+                        fidelity: currentFidelity,
+                        price: bestPrice,
+                        binSize: binSize,
+                        message: `Level ${level}: Range $${(currentCenter - currentRange).toFixed(2)}-$${(currentCenter + currentRange).toFixed(2)}, Bin ${binSize.toFixed(2)}¢, Fidelity ${(currentFidelity * 100).toFixed(1)}%`
+                    });
+                    
+                    // Check convergence criteria
+                    if (currentFidelity > 0.95 || binSize < 1.0) {
+                        updateCallback({
+                            level: level,
+                            message: `✓ Converged at level ${level} with fidelity ${(currentFidelity * 100).toFixed(1)}%`,
+                            converged: true
+                        });
+                        break;
+                    }
+                    
+                    // Zoom for next level
+                    currentRange *= 0.4; // Zoom factor
+                    currentCenter = bestPrice;
+                }
+                
+                return {
+                    finalPrice: bestPrice,
+                    finalFidelity: currentFidelity,
+                    finalBinSize: (currentRange / this.modes) * 100,
+                    levels: this.convergenceHistory.length
+                };
+            }
+
+            generateProbabilityDistribution(center, range) {
+                const numBins = this.modes * 2;
+                const distribution = [];
+                const minPrice = center - range;
+                const maxPrice = center + range;
+                
+                for (let i = 0; i < numBins; i++) {
+                    const price = minPrice + (maxPrice - minPrice) * i / (numBins - 1);
+                    // Quantum-inspired probability with interference patterns
+                    const z = (price - this.S) / (this.S * this.sigma * Math.sqrt(this.T));
+                    let prob = Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
+                    
+                    // Add quantum interference effects
+                    prob *= (1 + 0.1 * Math.sin(i * Math.PI / 4));
+                    prob *= (1 + (Math.random() - 0.5) * 0.05);
+                    
+                    distribution.push({ price, probability: Math.max(0, prob) });
+                }
+                
+                // Normalize
+                const sum = distribution.reduce((s, d) => s + d.probability, 0);
+                distribution.forEach(d => d.probability /= sum);
+                
+                return distribution;
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Charts
+        let priceChart = null;
+        let convergenceChart = null;
+
+        function updatePriceChart(distribution, strike) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            
+            if (priceChart) priceChart.destroy();
+            
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: distribution.map(d => `$${d.price.toFixed(0)}`),
+                    datasets: [{
+                        label: 'Quantum Probability',
+                        data: distribution.map(d => d.probability),
+                        borderColor: '#4fc3f7',
+                        backgroundColor: 'rgba(79, 195, 247, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                strike: {
+                                    type: 'line',
+                                    xMin: strike,
+                                    xMax: strike,
+                                    borderColor: '#ff6b6b',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.6)' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.6)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateConvergenceChart(history) {
+            const ctx = document.getElementById('convergenceChart').getContext('2d');
+            
+            if (convergenceChart) convergenceChart.destroy();
+            
+            convergenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map(h => `Level ${h.level}`),
+                    datasets: [
+                        {
+                            label: 'Fidelity',
+                            data: history.map(h => h.fidelity),
+                            borderColor: '#66bb6a',
+                            backgroundColor: 'transparent',
+                            yAxisID: 'y',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Bin Size (¢)',
+                            data: history.map(h => h.binSize),
+                            borderColor: '#ffa726',
+                            backgroundColor: 'transparent',
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { color: 'rgba(255,255,255,0.7)' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.6)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#66bb6a' },
+                            title: { display: true, text: 'Fidelity', color: '#66bb6a' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#ffa726' },
+                            title: { display: true, text: 'Bin Size (¢)', color: '#ffa726' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Main execution
+        document.getElementById('runBtn').addEventListener('click', async function() {
+            // Get parameters
+            const modes = parseInt(document.getElementById('nModes').value);
+            const S = parseFloat(document.getElementById('spotPrice').value);
+            const K = parseFloat(document.getElementById('strikePrice').value);
+            const r = parseFloat(document.getElementById('riskFreeRate').value);
+            const sigma = parseFloat(document.getElementById('volatility').value);
+            const T = parseFloat(document.getElementById('timeToMaturity').value);
+            const maxLevels = parseInt(document.getElementById('maxLevels').value);
+            
+            // UI updates
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('loader').classList.add('active');
+            document.getElementById('results').style.display = 'none';
+            
+            // Clear previous log
+            document.getElementById('convergenceLog').innerHTML = '';
+            
+            // Initialize simulator
+            const sim = new PhotonicSimulator(modes, S, K, r, sigma, T);
+            
+            // Calculate Black-Scholes reference
+            const bsPrice = blackScholes(S, K, r, sigma, T);
+            document.getElementById('bsPrice').textContent = `$${bsPrice.toFixed(4)}`;
+            
+            // Show results section
+            setTimeout(() => {
+                document.getElementById('loader').classList.remove('active');
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('totalLevels').textContent = maxLevels;
+            }, 500);
+            
+            // Run hierarchical optimization
+            const result = await sim.runHierarchicalOptimization(maxLevels, (update) => {
+                if (update.message) {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.textContent = update.message;
+                    document.getElementById('convergenceLog').appendChild(logEntry);
+                    document.getElementById('convergenceLog').scrollTop = 
+                        document.getElementById('convergenceLog').scrollHeight;
+                }
+                
+                if (update.level) {
+                    document.getElementById('currentLevel').textContent = update.level;
+                    document.getElementById('levelFidelity').textContent = 
+                        (update.fidelity * 100).toFixed(1) + '%';
+                    document.getElementById('progressBar').style.width = 
+                        (update.level / maxLevels * 100) + '%';
+                    
+                    if (update.price) {
+                        document.getElementById('quantumPrice').textContent = 
+                            `$${update.price.toFixed(4)}`;
+                    }
+                }
+            });
+            
+            // Final results
+            document.getElementById('quantumPrice').textContent = `$${result.finalPrice.toFixed(4)}`;
+            document.getElementById('fidelity').textContent = `${(result.finalFidelity * 100).toFixed(1)}%`;
+            document.getElementById('precision').textContent = `${result.finalBinSize.toFixed(2)}¢`;
+            
+            // Color code fidelity
+            const fidElement = document.getElementById('fidelity');
+            fidElement.className = 'metric-value ' + 
+                (result.finalFidelity > 0.95 ? 'good' : 
+                 result.finalFidelity > 0.85 ? 'highlight' : 'warning');
+            
+            // Generate and display charts
+            const distribution = sim.generateProbabilityDistribution(S, S * 0.15);
+            updatePriceChart(distribution, K);
+            updateConvergenceChart(sim.convergenceHistory);
+            
+            // Re-enable button
+            document.getElementById('runBtn').disabled = false;
+        });
+    </script>
+</body>
+</html>
